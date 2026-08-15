@@ -57,15 +57,19 @@ is not decoration — see the voice-channel gotcha below.
 
 ## The verification gate
 
-`#verify-here` holds a rules post. Reacting with 🔥 grants `Verified`, which reveals the
-gated channels.
+`#verify-here` holds a rules post. Reacting with the custom `:Numo:` emoji
+(`1538173850108559440`) grants `Verified`, which reveals the gated channels.
+
+Custom emoji are matched by *name*, so `VERIFY_EMOJI=Numo` is enough. Changing the gate
+emoji does not retroactively grant anyone who already reacted with the old one — the
+listener fires on the reaction event, not on the reaction's presence.
 
 Implemented by [`ReactionRoleListener`](src/main/java/dev/saseq/listeners/ReactionRoleListener.java),
 configured through `.env` (see `.env.example`):
 
 ```
 VERIFY_MESSAGE_ID=1538192621040828516
-VERIFY_EMOJI=🔥
+VERIFY_EMOJI=Numo   # custom emoji, matched by name
 VERIFY_ROLE_ID=1538192584697061458
 VERIFY_REMOVE_ON_UNREACT=false
 ```
@@ -109,8 +113,9 @@ Buttons are message components, so they cannot be sent with the plain `send_mess
 
 Design notes:
 
-- **Ticket numbers come from existing channel names**, not stored state, so a restart cannot
-  reset the counter or reuse a number.
+- **Ticket numbers come from existing channel names**, not stored state. A restart cannot
+  reset the counter — but deleting every ticket does, and numbers are then reused. Close
+  tickets rather than deleting them to keep numbering monotonic.
 - **One open ticket per member**, or a public button becomes a channel-spam vector.
 - **Close hides the ticket from its author but keeps it for staff.** Deletion is a separate,
   deliberate button.
