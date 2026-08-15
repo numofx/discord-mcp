@@ -105,6 +105,58 @@ public class MessageService {
     }
 
     /**
+     * Suppresses or restores the link preview embeds on an existing message.
+     * <p>
+     * Discord renders a preview card for links, including the invite card for a
+     * {@code discord.gg} URL. Angle brackets around the URL do not suppress that
+     * invite card, so this flips the message's SUPPRESS_EMBEDS flag instead,
+     * leaving the message text untouched.
+     *
+     * @param channelId The ID of the channel containing the message.
+     * @param messageId The ID of the message to update.
+     * @param suppress  Optional "false" to restore embeds; defaults to suppressing them.
+     * @return A confirmation message with a link to the updated message.
+     */
+    @Tool(name = "suppress_embeds", description = "Hide or restore the link preview embeds on a message, without changing its text")
+    public String suppressEmbeds(@ToolParam(description = "Discord channel ID") String channelId,
+                                 @ToolParam(description = "Specific message ID") String messageId,
+                                 @ToolParam(description = "Set 'false' to restore embeds (default 'true')", required = false) String suppress) {
+        if (channelId == null || channelId.isEmpty()) {
+            throw new IllegalArgumentException("channelId cannot be null");
+        }
+        if (messageId == null || messageId.isEmpty()) {
+            throw new IllegalArgumentException("messageId cannot be null");
+        }
+        boolean suppressed = parseSuppressFlag(suppress);
+
+        MessageChannel channel = getMessageChannelById(channelId);
+        if (channel == null) {
+            throw new IllegalArgumentException("Channel not found by channelId");
+        }
+        Message messageById = channel.retrieveMessageById(messageId).complete();
+        if (messageById == null) {
+            throw new IllegalArgumentException("Message not found by messageId");
+        }
+        messageById.suppressEmbeds(suppressed).complete();
+        return (suppressed ? "Embeds suppressed successfully. " : "Embeds restored successfully. ")
+                + "Message link: " + messageById.getJumpUrl();
+    }
+
+    private boolean parseSuppressFlag(String suppress) {
+        if (suppress == null || suppress.isBlank()) {
+            return true;
+        }
+        String normalized = suppress.trim().toLowerCase();
+        if (normalized.equals("true")) {
+            return true;
+        }
+        if (normalized.equals("false")) {
+            return false;
+        }
+        throw new IllegalArgumentException("suppress must be 'true' or 'false'");
+    }
+
+    /**
      * Deletes a message from a specified Discord channel.
      *
      * @param channelId The ID of the channel containing the message.
