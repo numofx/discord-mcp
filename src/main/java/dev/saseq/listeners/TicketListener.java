@@ -38,8 +38,8 @@ public class TicketListener extends ListenerAdapter {
     private static final String REOPEN = "ticket:reopen";
     private static final String DELETE = "ticket:delete";
 
-    /** Leading digits of a ticket channel name, e.g. "12-rleifke". */
-    private static final Pattern TICKET_NUMBER = Pattern.compile("^(\\d+)-");
+    /** The number in a ticket channel name, e.g. "ticket-12". */
+    private static final Pattern TICKET_NUMBER = Pattern.compile("^ticket-(\\d+)$");
 
     @Value("${TICKETS_CATEGORY_ID:}")
     private String ticketsCategoryId;
@@ -83,7 +83,7 @@ public class TicketListener extends ListenerAdapter {
         EnumSet<Permission> access = EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND,
                 Permission.MESSAGE_HISTORY, Permission.MESSAGE_ATTACH_FILES, Permission.MESSAGE_ADD_REACTION);
 
-        category.createTextChannel(number + "-" + author.getUser().getName())
+        category.createTextChannel("ticket-" + number)
                 .setTopic("Ticket #" + number + " — created by " + author.getUser().getName()
                         + " (" + author.getId() + ")")
                 .addPermissionOverride(guild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
