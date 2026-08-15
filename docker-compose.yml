@@ -19,6 +19,7 @@ services:
       TICKET_STAFF_ROLE_ID: ${TICKET_STAFF_ROLE_ID:-}
       TICKET_LOG_CHANNEL_ID: ${TICKET_LOG_CHANNEL_ID:-}
       TICKET_LOG_PING_STAFF: ${TICKET_LOG_PING_STAFF:-false}
+      TICKET_COUNTER_CHANNEL_ID: ${TICKET_COUNTER_CHANNEL_ID:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s

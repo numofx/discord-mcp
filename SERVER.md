@@ -100,6 +100,7 @@ TICKETS_CATEGORY_ID=1538214701543202846
 TICKET_STAFF_ROLE_ID=1538183948675453050
 TICKET_LOG_CHANNEL_ID=1538188750910398575   # #mod-updates
 TICKET_LOG_PING_STAFF=false
+TICKET_COUNTER_CHANNEL_ID=1538188750910398575   # defaults to the log channel
 ```
 
 New tickets are announced in `#mod-updates` with a jump link. This is not cosmetic: ticket
@@ -113,9 +114,12 @@ Buttons are message components, so they cannot be sent with the plain `send_mess
 
 Design notes:
 
-- **Ticket numbers come from existing channel names**, not stored state. A restart cannot
-  reset the counter — but deleting every ticket does, and numbers are then reused. Close
-  tickets rather than deleting them to keep numbering monotonic.
+- **Ticket numbers never repeat.** The high-water mark is persisted in the counter channel's
+  topic as `[tickets:N]`, so deleting every ticket no longer restarts numbering. The next
+  number is `max(marker, highest open ticket channel) + 1` — the channel scan is kept as a
+  floor so a wiped marker cannot reissue a live ticket's number. Leave `[tickets:N]` in
+  place when editing that channel's topic. Writes are async and unsynchronised, so two
+  tickets opened in the same instant could still collide.
 - **One open ticket per member**, or a public button becomes a channel-spam vector.
 - **Close hides the ticket from its author but keeps it for staff.** Deletion is a separate,
   deliberate button.

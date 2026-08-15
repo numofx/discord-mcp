@@ -42,6 +42,11 @@ public class TicketListener extends ListenerAdapter {
     /** The number in a ticket channel name, e.g. "ticket-12". */
     private static final Pattern TICKET_NUMBER = Pattern.compile("^ticket-(\\d+)$");
 
+    /** The persisted high-water mark, stashed in a channel topic as "[tickets:12]". */
+    private static final Pattern COUNTER_MARKER = Pattern.compile("\\[tickets:(\\d+)]");
+
+    private static final int MAX_TOPIC_LENGTH = 1024;
+
     @Value("${TICKETS_CATEGORY_ID:}")
     private String ticketsCategoryId;
 
@@ -59,6 +64,13 @@ public class TicketListener extends ListenerAdapter {
     /** Whether the announcement should ping the staff role rather than just naming it. */
     @Value("${TICKET_LOG_PING_STAFF:false}")
     private boolean pingStaff;
+
+    /**
+     * Channel whose topic holds the ticket counter. Defaults to TICKET_LOG_CHANNEL_ID. Any
+     * text channel works; a staff-only one keeps the marker out of members' sight.
+     */
+    @Value("${TICKET_COUNTER_CHANNEL_ID:}")
+    private String counterChannelId;
 
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
@@ -92,7 +104,7 @@ public class TicketListener extends ListenerAdapter {
             return;
         }
 
-        int number = nextTicketNumber(category);
+        int number = nextTicketNumber(guild, category);
         EnumSet<Permission> access = EnumSet.of(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND,
                 Permission.MESSAGE_HISTORY, Permission.MESSAGE_ATTACH_FILES, Permission.MESSAGE_ADD_REACTION);
 
@@ -111,6 +123,7 @@ public class TicketListener extends ListenerAdapter {
                                     Button.success(REOPEN, "Reopen"),
                                     Button.danger(DELETE, "Delete")))
                             .queue(this::pinQuietly);
+                    writeCounter(guild, number);
                     announceToStaff(guild, staff, number, author, channel);
                     event.reply("Ticket #" + number + " created: " + channel.getAsMention())
                             .setEphemeral(true).queue();
@@ -212,15 +225,59 @@ public class TicketListener extends ListenerAdapter {
     }
 
     /**
-     * Ticket numbers come from the existing channel names rather than stored state, so a
-     * restart cannot reset the counter or reuse a number.
+     * The highest number ever issued, taken as the greater of the persisted counter and the
+     * open ticket channels. Channel names alone are not enough — deleting every ticket would
+     * restart numbering and hand a second ticket a number already used. The channel scan is
+     * kept as a floor so a wiped or absent marker cannot reissue a live ticket's number.
      */
-    private int nextTicketNumber(Category category) {
-        return category.getTextChannels().stream()
+    private int nextTicketNumber(Guild guild, Category category) {
+        int fromChannels = category.getTextChannels().stream()
                 .map(c -> TICKET_NUMBER.matcher(c.getName()))
                 .filter(Matcher::find)
                 .mapToInt(m -> Integer.parseInt(m.group(1)))
-                .max().orElse(0) + 1;
+                .max().orElse(0);
+        return Math.max(fromChannels, readCounter(guild)) + 1;
+    }
+
+    /**
+     * The counter lives in a channel topic rather than a file so it survives restarts,
+     * redeploys and containers without a volume. Writes are async and unsynchronised: two
+     * tickets opened in the same instant could collide, which at support volumes is a fair
+     * trade for having no datastore.
+     */
+    private int readCounter(Guild guild) {
+        TextChannel channel = counterChannel(guild);
+        if (channel == null || channel.getTopic() == null) {
+            return 0;
+        }
+        Matcher m = COUNTER_MARKER.matcher(channel.getTopic());
+        return m.find() ? Integer.parseInt(m.group(1)) : 0;
+    }
+
+    private void writeCounter(Guild guild, int number) {
+        TextChannel channel = counterChannel(guild);
+        if (channel == null) {
+            return;
+        }
+        String topic = channel.getTopic() == null ? "" : channel.getTopic();
+        Matcher m = COUNTER_MARKER.matcher(topic);
+        String marker = "[tickets:" + number + "]";
+        String updated = m.find()
+                ? m.replaceFirst(Matcher.quoteReplacement(marker))
+                : (topic.isBlank() ? marker : topic.trim() + " " + marker);
+        if (updated.length() > MAX_TOPIC_LENGTH) {
+            log.warn("Ticket counter not persisted: topic of #{} would exceed {} characters",
+                    channel.getName(), MAX_TOPIC_LENGTH);
+            return;
+        }
+        channel.getManager().setTopic(updated).reason("Ticket counter")
+                .queue(ok -> { }, err -> log.warn("Could not persist ticket counter: {}", err.getMessage()));
+    }
+
+    /** Defaults to the staff log channel, which is already hidden from members. */
+    private TextChannel counterChannel(Guild guild) {
+        String id = counterChannelId.isEmpty() ? logChannelId : counterChannelId;
+        return id.isEmpty() ? null : guild.getTextChannelById(id);
     }
 
     private String authorIdFromTopic(String topic) {
