@@ -15,6 +15,8 @@ services:
       VERIFY_EMOJI: ${VERIFY_EMOJI:-}
       VERIFY_ROLE_ID: ${VERIFY_ROLE_ID:-}
       VERIFY_REMOVE_ON_UNREACT: ${VERIFY_REMOVE_ON_UNREACT:-false}
+      TICKETS_CATEGORY_ID: ${TICKETS_CATEGORY_ID:-}
+      TICKET_STAFF_ROLE_ID: ${TICKET_STAFF_ROLE_ID:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s

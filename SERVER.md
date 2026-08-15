@@ -81,6 +81,35 @@ A dead process means members react and get nothing, with no error anywhere they 
 
 If the rules post is ever reposted, `VERIFY_MESSAGE_ID` must be updated to the new message.
 
+## Support tickets
+
+`#🆘│help-zone` (`1538214950550380544`, under Support `1538214663655784520`) holds a panel
+message with an **Open ticket** button. Clicking it creates a private channel under
+**Created Tickets** (`1538214701543202846`) visible only to its author and `Numo Team`,
+with Claim / Close / Reopen / Delete controls.
+
+Implemented by [`TicketListener`](src/main/java/dev/saseq/listeners/TicketListener.java),
+configured through `.env`:
+
+```
+TICKETS_CATEGORY_ID=1538214701543202846
+TICKET_STAFF_ROLE_ID=1538183948675453050
+```
+
+Buttons are message components, so they cannot be sent with the plain `send_message` tool —
+[`TicketService`](src/main/java/dev/saseq/services/TicketService.java) exposes
+`post_ticket_panel` for that. Re-post the panel if the channel is ever cleared.
+
+Design notes:
+
+- **Ticket numbers come from existing channel names**, not stored state, so a restart cannot
+  reset the counter or reuse a number.
+- **One open ticket per member**, or a public button becomes a channel-spam vector.
+- **Close hides the ticket from its author but keeps it for staff.** Deletion is a separate,
+  deliberate button.
+- The panel message is pinned only if the bot has `PIN_MESSAGES`, which is *not* implied by
+  `Manage Messages`. Without it the ticket still works, unpinned.
+
 ## Server settings
 
 - Community: enabled (`COMMUNITY`, `NEWS`)
@@ -152,3 +181,4 @@ After any hand reorganization, re-check what an unverified member can actually s
 - The member counter is static text. Keeping it accurate needs a scheduled rename.
 - `#info-and-links` has no contract addresses.
 - `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
+- The bot has no `PIN_MESSAGES`, so ticket panels are not pinned inside ticket channels.
