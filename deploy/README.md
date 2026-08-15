@@ -23,6 +23,11 @@ Kill any hand-started instance first, or port 8085 will already be taken.
 
 The plist hardcodes absolute paths; update them if the repo moves.
 
+## AWS (production)
+
+See [aws.md](aws.md). A laptop is fine for development; a public server's front door
+should not depend on a lid staying open.
+
 ## Docker
 
 ```sh

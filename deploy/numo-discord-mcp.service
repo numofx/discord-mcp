@@ -1,0 +1,28 @@
+[Unit]
+Description=Numo Discord bot (discord-mcp)
+Documentation=https://github.com/numofx/discord-mcp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=numo
+WorkingDirectory=/opt/numo-discord-mcp
+EnvironmentFile=/opt/numo-discord-mcp/.env
+ExecStart=/usr/bin/java -Xmx512m -jar /opt/numo-discord-mcp/discord-mcp.jar
+Restart=always
+RestartSec=10
+
+StandardOutput=append:/var/log/numo-discord-mcp.log
+StandardError=append:/var/log/numo-discord-mcp.log
+
+# The MCP endpoint on 8085 has no authentication — anyone who can reach it can drive
+# the bot. SERVER_ADDRESS=127.0.0.1 in .env keeps it off the public interface; the
+# security group should not open 8085 either. Reach it over an SSH tunnel instead.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
