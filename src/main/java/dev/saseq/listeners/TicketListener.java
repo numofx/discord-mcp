@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -97,12 +98,7 @@ public class TicketListener extends ListenerAdapter {
                                     Button.secondary(CLOSE, "Close"),
                                     Button.success(REOPEN, "Reopen"),
                                     Button.danger(DELETE, "Delete")))
-                            // Pinning needs PIN_MESSAGES, which the bot may not have. A ticket
-                            // that works but is unpinned is fine; a failed pin must not surface
-                            // as an error on an otherwise successful open.
-                            .queue(m -> m.pin().queue(ok -> { },
-                                    err -> log.info("Ticket panel not pinned ({}). Grant the bot Pin Messages to enable it.",
-                                            err.getMessage())));
+                            .queue(this::pinQuietly);
                     event.reply("Ticket #" + number + " created: " + channel.getAsMention())
                             .setEphemeral(true).queue();
                     log.info("Opened ticket #{} for {}", number, author.getId());
@@ -111,6 +107,21 @@ public class TicketListener extends ListenerAdapter {
                     event.reply("Could not create your ticket. Please tell a team member.")
                             .setEphemeral(true).queue();
                 });
+    }
+
+    /**
+     * Pinning needs PIN_MESSAGES, which Manage Messages does not imply and which the bot may
+     * not have. JDA checks that client-side and throws when {@code pin()} is called, not when
+     * the request completes — so this must be a try/catch, not a queue() failure handler. An
+     * unpinned ticket still works.
+     */
+    private void pinQuietly(net.dv8tion.jda.api.entities.Message message) {
+        try {
+            message.pin().queue(ok -> { }, err -> log.info("Ticket panel not pinned: {}", err.getMessage()));
+        } catch (InsufficientPermissionException e) {
+            log.info("Ticket panel not pinned (missing {}). Grant the bot that permission to enable pinning.",
+                    e.getPermission());
+        }
     }
 
     private void claimTicket(ButtonInteractionEvent event) {
