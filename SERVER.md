@@ -133,7 +133,8 @@ Design notes:
 - Verification level: **Medium** (account ≥5 min old)
 - Explicit content filter: scan all members
 - Onboarding: **disabled** — it conflicts with a read-only gate (see below)
-- `mfa_level: 0` — 2FA-for-moderation is still off, and should be on before public invites
+- `mfa_level: 1` — 2FA required for moderator actions. Bots are exempt, so `numo-mcp` is
+  unaffected; human moderators need 2FA on their accounts.
 
 ### AutoMod
 
@@ -188,12 +189,8 @@ After any hand reorganization, re-check what an unverified member can actually s
 
 ## Open items
 
-- 2FA-for-moderation is off (`mfa_level: 0`). Should be on before public invites.
 - The Discord *application* is owned by a personal account, not a Dev Portal Team. If that
   account is lost, so is the bot.
-- The gate has never been tested by a non-owner. The owner bypasses permission checks, so
-  the role grant is proven but the reveal is not. Join from a second account to confirm what
-  a new member actually sees.
 - The member counter is static text. Keeping it accurate needs a scheduled rename.
 - `#info-and-links` has no contract addresses.
 - `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
