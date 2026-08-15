@@ -11,6 +11,10 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-http}
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       DISCORD_GUILD_ID: ${DISCORD_GUILD_ID:-}
+      VERIFY_MESSAGE_ID: ${VERIFY_MESSAGE_ID:-}
+      VERIFY_EMOJI: ${VERIFY_EMOJI:-}
+      VERIFY_ROLE_ID: ${VERIFY_ROLE_ID:-}
+      VERIFY_REMOVE_ON_UNREACT: ${VERIFY_REMOVE_ON_UNREACT:-false}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s
