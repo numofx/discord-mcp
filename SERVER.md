@@ -189,8 +189,10 @@ After any hand reorganization, re-check what an unverified member can actually s
 
 ## Open items
 
-- The Discord *application* is owned by a personal account, not a Dev Portal Team. If that
-  account is lost, so is the bot.
+- The Numo app is owned by the **Numo** Dev Portal team (`1538243799543849010`), but that
+  team has one member. Add a second human or the bus factor is unchanged. Team admins can
+  regenerate the bot token, which breaks the running bot until `.env` is updated and it is
+  restarted.
 - The member counter is static text. Keeping it accurate needs a scheduled rename.
 - `#info-and-links` has no contract addresses.
 - `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
