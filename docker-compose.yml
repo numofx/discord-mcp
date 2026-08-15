@@ -20,6 +20,10 @@ services:
       TICKET_LOG_CHANNEL_ID: ${TICKET_LOG_CHANNEL_ID:-}
       TICKET_LOG_PING_STAFF: ${TICKET_LOG_PING_STAFF:-false}
       TICKET_COUNTER_CHANNEL_ID: ${TICKET_COUNTER_CHANNEL_ID:-}
+      MEMBER_COUNT_CHANNEL_ID: ${MEMBER_COUNT_CHANNEL_ID:-}
+      MEMBER_COUNT_FORMAT: ${MEMBER_COUNT_FORMAT:-Total Members: {count}}
+      MEMBER_COUNT_EXCLUDE_BOTS: ${MEMBER_COUNT_EXCLUDE_BOTS:-true}
+      MEMBER_COUNT_INTERVAL_MS: ${MEMBER_COUNT_INTERVAL_MS:-600000}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s

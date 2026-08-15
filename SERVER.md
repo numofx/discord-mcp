@@ -29,7 +29,7 @@ channel only appears after passing the verify gate.
 | `#verify-here` | `1538187413652774912` | The gate. Community rules channel. Public, read-only, reactions allowed. |
 | `#mod-updates` | `1538188750910398575` | Community updates channel. Gated, team-only. |
 | `The Stage` | `1538211558017212416` | Gated. `Numo Team` may speak, `Verified` may attend. |
-| `Total Members: 2` | `1538211822220480538` | Gated counter. `@everyone` denied View + Connect. The number is just text — nothing updates it. |
+| `Total Members: N` | `1538211822220480538` | Live counter, renamed on a schedule. Gated; `@everyone` denied View + Connect. |
 
 ### Welcome (public — visible before verifying)
 
@@ -127,6 +127,29 @@ Design notes:
   and is *not* implied by `Manage Messages` — Discord split them. If it is ever revoked the
   ticket still works, unpinned, and the skip is logged rather than raised.
 
+## Member counter
+
+[`MemberCountUpdater`](src/main/java/dev/saseq/schedulers/MemberCountUpdater.java) renames the
+counter channel on a schedule:
+
+```
+MEMBER_COUNT_CHANNEL_ID=1538211822220480538
+MEMBER_COUNT_FORMAT=Total Members: {count}
+MEMBER_COUNT_EXCLUDE_BOTS=false
+MEMBER_COUNT_INTERVAL_MS=600000
+```
+
+**It polls rather than reacting to join/leave events on purpose.** Discord rate-limits channel
+renames to roughly two per ten minutes per channel, so an event-driven counter exhausts the
+limit and then silently stops updating. The rename is also skipped whenever the name already
+matches, so a quiet server spends no rate limit at all.
+
+Counting bots is the default so the number agrees with the count Discord itself shows. Turn
+`MEMBER_COUNT_EXCLUDE_BOTS` on for humans only, and relabel the channel to match.
+
+This relies on the explicit `numo-mcp` View + Connect allow on that channel — without it the
+bot cannot see the channel to rename it.
+
 ## Server settings
 
 - Community: enabled (`COMMUNITY`, `NEWS`)
@@ -194,6 +217,5 @@ After any hand reorganization, re-check what an unverified member can actually s
   team has one member. Add a second human or the bus factor is unchanged. Team admins can
   regenerate the bot token, which breaks the running bot until `.env` is updated and it is
   restarted.
-- The member counter is static text. Keeping it accurate needs a scheduled rename.
 - `#info-and-links` has no contract addresses.
 - `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
