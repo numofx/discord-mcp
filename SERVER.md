@@ -80,8 +80,10 @@ events never arrive and the gate fails silently.
 `VERIFY_REMOVE_ON_UNREACT` is **false** deliberately: an accidental un-react should not
 silently lock a member out of the server.
 
-**The gate only works while the process is running.** See [`deploy/README.md`](deploy/README.md).
-A dead process means members react and get nothing, with no error anywhere they can see.
+**The gate only works while the process is running.** It runs on a Lightsail instance —
+see [`deploy/aws.md`](deploy/aws.md). A dead process means members react and get nothing,
+with no error anywhere they can see, and `#help-zone` is gated behind `Verified`, so they
+cannot open a ticket to report it either.
 
 If the rules post is ever reposted, `VERIFY_MESSAGE_ID` must be updated to the new message.
 

@@ -18,10 +18,34 @@ launchctl unload -w ~/Library/LaunchAgents/com.numo.discord-mcp.plist
 app is team-owned, so regenerate it in the Developer Portal → Numo → Bot → Reset Token, put
 the new value in the server's `.env` only, and restart.
 
-## Instance
+## The running instance
 
-Lightsail $5/mo (1 GB) is enough with `-Xmx512m`. EC2 `t4g.small` if you want headroom.
-Amazon Linux 2023.
+| | |
+|---|---|
+| Lightsail instance | `numo-bot-2`, `small_3_0` (2 GB), us-east-1a, $12/mo |
+| Static IP | `34.194.252.122` (free while attached) |
+| SSH | `ssh numo-bot` — alias in `~/.ssh/config`, key `~/.ssh/numo-bot` |
+| Service | `numo-discord-mcp`, enabled at boot |
+| Open ports | TCP/22 only |
+
+**Sizing.** 1 GB (`micro_3_0`, $7/mo) is enough — the bot idles around 0.2% CPU and a few
+hundred MB. The 2 GB tier here is a leftover from debugging and can be dropped by snapshot
+and restore.
+
+**Burst capacity is the real constraint during setup, not RAM.** A fresh Lightsail instance
+starts at ~0% CPU burst and accrues over time, including instances restored from a snapshot.
+Installing a JDK exhausts it, after which SSH becomes intermittent for a while — the instance
+is throttled, not broken (`StatusCheckFailed` stays 0). Wait for `BurstCapacityPercentage`
+to recover rather than resizing:
+
+```sh
+aws lightsail get-instance-metric-data --region us-east-1 --instance-name numo-bot-2 \
+  --metric-name BurstCapacityPercentage --period 300 --unit Percent --statistics Maximum \
+  --start-time <iso8601> --end-time <iso8601>
+```
+
+Use `rsync --partial` rather than `scp` for the jar; a throttled link drops 50 MB streams
+and rsync resumes where it stopped.
 
 **Security group: SSH only.** Do *not* open 8085. The MCP endpoint has no authentication —
 anyone who can reach it can create channels, assign roles and read messages. `.env` also
