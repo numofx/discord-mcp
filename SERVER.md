@@ -11,7 +11,7 @@ Guild: **Numo** — `1538170660180729927`
 | Role | ID | Purpose |
 |---|---|---|
 | `numo-mcp` | `1538177919497674785` | Managed integration role for the bot. Created by Discord on invite, cannot be deleted while the bot is in the server. Carries the bot's permissions. |
-| `Numo Team` | `1538183948675453050` | Human-facing team label. Permissions `0` — grants nothing on its own; access comes from channel overwrites. |
+| `Numo Team` | `1538183948675453050` | Human-facing team label. Holds only Mute/Move Members (`20971520`) for voice moderation; all other access comes from channel overwrites. |
 | `Verified` | `1538192584697061458` | Granted by the reaction gate. Permissions `0`; gates channel visibility via overwrites. |
 
 Hierarchy is `numo-mcp` > `Numo Team` > `Verified` > `@everyone`. **The bot can only manage
@@ -218,4 +218,3 @@ After any hand reorganization, re-check what an unverified member can actually s
   regenerate the bot token, which breaks the running bot until `.env` is updated and it is
   restarted.
 - `#info-and-links` has no contract addresses.
-- `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
