@@ -19,15 +19,41 @@ roles below its own**, so `numo-mcp` must stay at the top or role assignment bre
 
 ## Channels
 
+"Gated" below means `@everyone` is denied View Channel and `Verified` is allowed — the
+channel only appears after passing the verify gate.
+
+### Uncategorized
+
 | Channel | ID | Notes |
 |---|---|---|
-| `#verify-here` | `1538187413652774912` | The gate. Community rules channel. Read-only for `@everyone`, reactions allowed. |
-| `#general` | `1538170661308989482` | Gated: `@everyone` denied View, `Verified` + `Numo Team` allowed. |
+| `#verify-here` | `1538187413652774912` | The gate. Community rules channel. Public, read-only, reactions allowed. |
+| `#mod-updates` | `1538188750910398575` | Community updates channel. Gated, team-only. |
+| `The Stage` | `1538211558017212416` | Gated. `Numo Team` may speak, `Verified` may attend. |
+| `Total Members: 2` | `1538211822220480538` | Gated counter. `@everyone` denied View + Connect. The number is just text — nothing updates it. |
+
+### Welcome (public — visible before verifying)
+
+| Channel | ID | Notes |
+|---|---|---|
 | `#🔗│info-and-links` | `1538187520301334528` | Read-only for `@everyone`, writable by `Numo Team`. |
 | `#❓│faq` | `1538187541453479987` | Same as above. |
-| `#mod-updates` | `1538188750910398575` | Community updates channel. Hidden from `@everyone`. |
-| `Total Members: 2` | `1538187460830564473` | Voice channel used as a counter. `@everyone` denied Connect. The number is just text — nothing updates it. |
-| `The Stage` | `1538191526390141098` | See "Known issues". |
+
+### Updates / Community / Developers (all gated)
+
+| Channel | ID | Notes |
+|---|---|---|
+| `#📣│announcements` | `1538204723537117225` | Team-only posting. |
+| `#🔔│socials` | `1538204746786021468` | Team-only posting. |
+| `#💬│general` | `1538170661308989482` | |
+| `#🔥│gm` | `1538204771364773979` | |
+| `#💡│feedback` | `1538204802838827008` | |
+| `#🛠️│api-support` | `1538204842047045795` | Integration help. |
+
+Category IDs: Welcome `1538187481881645096`, Updates `1538204384670781491`,
+Community `1538204404086472804`, Developers `1538204425020112896`.
+
+The Stage and the counter both carry an explicit `numo-mcp` allow for View + Connect. That
+is not decoration — see the voice-channel gotcha below.
 
 ## The verification gate
 
@@ -80,7 +106,7 @@ members about exactly those words, and filtering them would gag the safety advic
 
 ## Gotchas
 
-Four things that cost time here and will again:
+Seven things that cost time here and will again:
 
 **Grant before you deny.** Denying a permission to `@everyone` also denies it to the bot,
 and Discord will not let a bot grant a permission it does not currently hold in that
@@ -89,7 +115,12 @@ the other way returns a misleading "Bot lacks permission to manage channel permi
 
 **On voice/stage channels this is unrecoverable.** Denying Connect to `@everyone` locks the
 bot out of editing *or deleting* that channel — Discord requires Connect to manage a voice
-channel's overwrites. Only a human can undo it. Always grant the bot's role Connect first.
+channel's overwrites. It cost two channels here; both had to be deleted by hand and rebuilt.
+Give `numo-mcp` an explicit View + Connect allow on every voice channel, first, always.
+
+**A bot can only grant permissions it holds.** Granting `Manage Permissions` through an
+overwrite needs Administrator, and `Mute Members` / `Move Members` can't be handed out
+because the bot doesn't have them guild-wide. Trim the grant or widen the bot's role.
 
 **`PATCH /guilds` returns 200 for changes it silently drops.** Setting `rules_channel_id`
 alone did nothing; it only applied when sent with the full Community bundle (`features`,
@@ -100,13 +131,24 @@ back — a 200 is not proof.
 and `#verify-here` as its only default channel, making that channel read-only is rejected.
 Onboarding and a reaction gate are two front doors; pick one.
 
+**Onboarding is sticky.** `GUILD_ONBOARDING_EVER_ENABLED` never clears, so members keep the
+opt-in channel-list UX ("This channel is not on your channel list") even with Onboarding
+disabled. `default_channel_ids` controls what's on the list by default — and it rejects any
+channel `@everyone` can't see, so gated channels can never be defaults. Members add those
+through Browse Channels.
+
+**Syncing a channel to its category wipes its overwrites.** `#general` was found ungated
+because something re-synced it; the `@everyone` View deny was simply gone, with no warning.
+After any hand reorganization, re-check what an unverified member can actually see.
+
 ## Open items
 
-- `The Stage`: the bot denied Connect to `@everyone` before granting itself, so it can no
-  longer manage or delete the channel. Fix in the UI — remove the `@everyone` Connect deny,
-  or grant `numo-mcp` Connect — then `Verified` can be given access.
-- 2FA-for-moderation is off (`mfa_level: 0`).
+- 2FA-for-moderation is off (`mfa_level: 0`). Should be on before public invites.
 - The Discord *application* is owned by a personal account, not a Dev Portal Team. If that
   account is lost, so is the bot.
-- `#info-and-links` and `#faq` are empty.
-- The member counter is static text.
+- The gate has never been tested by a non-owner. The owner bypasses permission checks, so
+  the role grant is proven but the reveal is not. Join from a second account to confirm what
+  a new member actually sees.
+- The member counter is static text. Keeping it accurate needs a scheduled rename.
+- `#info-and-links` has no contract addresses.
+- `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
