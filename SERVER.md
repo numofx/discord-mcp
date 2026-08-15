@@ -123,8 +123,9 @@ Design notes:
 - **One open ticket per member**, or a public button becomes a channel-spam vector.
 - **Close hides the ticket from its author but keeps it for staff.** Deletion is a separate,
   deliberate button.
-- The panel message is pinned only if the bot has `PIN_MESSAGES`, which is *not* implied by
-  `Manage Messages`. Without it the ticket still works, unpinned.
+- The panel message is pinned inside each ticket. `PIN_MESSAGES` is a separate permission
+  and is *not* implied by `Manage Messages` — Discord split them. If it is ever revoked the
+  ticket still works, unpinned, and the skip is logged rather than raised.
 
 ## Server settings
 
@@ -196,4 +197,3 @@ After any hand reorganization, re-check what an unverified member can actually s
 - The member counter is static text. Keeping it accurate needs a scheduled rename.
 - `#info-and-links` has no contract addresses.
 - `Numo Team` has no Mute/Move Members, so nobody can moderate voice during a stage.
-- The bot has no `PIN_MESSAGES`, so ticket panels are not pinned inside ticket channels.
