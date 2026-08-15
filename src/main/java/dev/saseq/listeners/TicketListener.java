@@ -48,6 +48,18 @@ public class TicketListener extends ListenerAdapter {
     @Value("${TICKET_STAFF_ROLE_ID:}")
     private String staffRoleId;
 
+    /**
+     * Where to announce new tickets. Ticket channels do not appear on a member's channel
+     * list until added, so without this a ticket can sit unread with no visual cue. Blank
+     * disables the announcement.
+     */
+    @Value("${TICKET_LOG_CHANNEL_ID:}")
+    private String logChannelId;
+
+    /** Whether the announcement should ping the staff role rather than just naming it. */
+    @Value("${TICKET_LOG_PING_STAFF:false}")
+    private boolean pingStaff;
+
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         String id = event.getComponentId();
@@ -99,6 +111,7 @@ public class TicketListener extends ListenerAdapter {
                                     Button.success(REOPEN, "Reopen"),
                                     Button.danger(DELETE, "Delete")))
                             .queue(this::pinQuietly);
+                    announceToStaff(guild, staff, number, author, channel);
                     event.reply("Ticket #" + number + " created: " + channel.getAsMention())
                             .setEphemeral(true).queue();
                     log.info("Opened ticket #{} for {}", number, author.getId());
@@ -107,6 +120,25 @@ public class TicketListener extends ListenerAdapter {
                     event.reply("Could not create your ticket. Please tell a team member.")
                             .setEphemeral(true).queue();
                 });
+    }
+
+    /**
+     * Announces a new ticket in the staff channel so it surfaces as an unread in a channel
+     * staff already watch, rather than waiting to be noticed in the sidebar.
+     */
+    private void announceToStaff(Guild guild, Role staff, int number, Member author, TextChannel ticket) {
+        if (logChannelId.isEmpty()) {
+            return;
+        }
+        TextChannel logChannel = guild.getTextChannelById(logChannelId);
+        if (logChannel == null) {
+            log.warn("TICKET_LOG_CHANNEL_ID {} does not resolve to a text channel", logChannelId);
+            return;
+        }
+        String who = pingStaff ? staff.getAsMention() : staff.getName();
+        logChannel.sendMessage(who + " — ticket **#" + number + "** opened by " + author.getAsMention()
+                        + ": " + ticket.getAsMention())
+                .queue(ok -> { }, err -> log.warn("Could not announce ticket #{}: {}", number, err.getMessage()));
     }
 
     /**

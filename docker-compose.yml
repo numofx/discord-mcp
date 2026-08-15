@@ -17,6 +17,8 @@ services:
       VERIFY_REMOVE_ON_UNREACT: ${VERIFY_REMOVE_ON_UNREACT:-false}
       TICKETS_CATEGORY_ID: ${TICKETS_CATEGORY_ID:-}
       TICKET_STAFF_ROLE_ID: ${TICKET_STAFF_ROLE_ID:-}
+      TICKET_LOG_CHANNEL_ID: ${TICKET_LOG_CHANNEL_ID:-}
+      TICKET_LOG_PING_STAFF: ${TICKET_LOG_PING_STAFF:-false}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s

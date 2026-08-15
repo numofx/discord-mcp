@@ -94,7 +94,14 @@ configured through `.env`:
 ```
 TICKETS_CATEGORY_ID=1538214701543202846
 TICKET_STAFF_ROLE_ID=1538183948675453050
+TICKET_LOG_CHANNEL_ID=1538188750910398575   # #mod-updates
+TICKET_LOG_PING_STAFF=false
 ```
+
+New tickets are announced in `#mod-updates` with a jump link. This is not cosmetic: ticket
+channels do not appear on a member's channel list until added (see the sticky-onboarding
+gotcha), so without the announcement a ticket can sit unread with no visual cue. Staff
+should also turn on **Follow Category** for Created Tickets in Browse Channels.
 
 Buttons are message components, so they cannot be sent with the plain `send_message` tool —
 [`TicketService`](src/main/java/dev/saseq/services/TicketService.java) exposes
